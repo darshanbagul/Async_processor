@@ -6,7 +6,7 @@ command details as well as a swagger spec endpoint
 from multiprocessing import Process, Queue
 import sys
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_swagger import swagger
 from flask_api import status
 
@@ -23,6 +23,10 @@ app.config['CELERY_BROKER_URL'] = CELERY_BROKER_URL
 app.config['CELERY_RESULT_BACKEND'] = CELERY_RESULT_BACKEND
 
 
+@app.route('/upload')
+def upload_file():
+   return render_template('./upload.html')
+
 @app.route('/commands', methods=['GET'])
 def get_command_output():
     """
@@ -35,7 +39,7 @@ def get_command_output():
       400:
         description: Commands not found
     """
-    try:
+    try: 
         commands = Command.query.all()
         if commands:
             logger.info("Request processed successfully.")
@@ -73,14 +77,20 @@ def process_commands():
         description: Processing OK
     """
     try:
+        fi = None
         if 'file_data' in request.files:
             file_data = request.files['file_data']
             if file_data and allowed_file(file_data.filename):
                 fi = secure_filename(file_data.filename)
                 file_data.save(os.path.join(app.config['UPLOAD_FOLDER'], fi))
-        else:
-            fi = request.args.get('filename')
-
+        if not fi:
+            if request.form:
+                fi = request.form.get('filename')
+        if not fi:
+            if request.args.get('filename'):
+                fi = request.args.get('filename')
+        if not fi:  
+            raise Exception("Unable to locate given file")
         from command_parser import get_valid_commands, process_command_output
         queue = Queue()
         get_valid_commands(queue, fi)
