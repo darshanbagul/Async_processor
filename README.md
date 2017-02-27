@@ -33,3 +33,5 @@ Assuming the command is valid:
 3. Run the celery worker with this command: celery worker -A command_parser.celery --loglevel=info
 4. You can then hit it to either drop the db, init the db, fetch results, input data (curl or python requests).
    - Sample request to feed in the data: requests.post("http://127.0.0.1:8080/commands", params={'filename': 'commands.txt'})
+   
+### You can view a demo hosted at : http://www.darshanbagul.com/basch ###
